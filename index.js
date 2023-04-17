@@ -37,11 +37,28 @@ app.post('/books', async (req, res, next)=>{
         const result = await client.query({
             text: `INSERT INTO public.books(
                 author, title, isbn)
-                VALUES ('${bookAuthor}', '${bookTitle}', '${bookIsbn}');`
+                VALUES ($1, $2, $3);`,
+            values: [bookAuthor, bookTitle, bookIsbn]
         }).catch(err=>console.log(err))
         res.send(`new book was added with title "${bookTitle}"`)
     }catch(err){
         res.send(err)
+    }
+})
+
+app.delete('/books', async (req, res, next) =>{
+    try{
+        const {isbn: bookIsbn, title: bookTitle} = req.body
+        const client = await pool.connect().catch(err => console.log(err))
+        client.query({
+            text: `DELETE FROM public.books 
+            WHERE isbn=$1;`,
+            values: [bookIsbn]
+        })
+        res.send(bookTitle+' WAS SUCCESSFULLY DELETED.')
+    }catch(err){
+        console.log(err)
+        res.send("some error", err)
     }
 })
 
