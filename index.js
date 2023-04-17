@@ -5,16 +5,6 @@ import bodyParser from 'body-parser'
 const app = express()
 const port = 3000
 
-app.use(bodyParser.json())
-
-app.get('/books', (req, res, next)=>{
-    res.send('tariel is answering your questions!!!')
-}) 
-
-app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
-})
-
 const { Pool } = pg
 
 const pool = new Pool({
@@ -25,11 +15,39 @@ const pool = new Pool({
     port: 7000,
 })
 
-const client = await pool.connect().catch(err => console.log(err))
-const result = await client.query({
-    text: 'SELECT * FROM books'
-}).catch(err=>console.log(err))
 
+app.use(bodyParser.json())
+
+app.get('/books', async (req, res, next)=>{
+    try{
+        const client = await pool.connect().catch(err => console.log(err))
+        const result = await client.query({
+            text: 'SELECT * FROM books'
+        }).catch(err=>console.log(err))
+        res.json(result.rows)    
+    }catch(err){
+        res.send(err)
+    }
+})
+
+app.post('/books', async (req, res, next)=>{
+    try{
+        const { author: bookAuthor, title: bookTitle, isbn: bookIsbn } = req.body
+        const client = await pool.connect().catch(err => console.log(err))
+        const result = await client.query({
+            text: `INSERT INTO public.books(
+                author, title, isbn)
+                VALUES ('${bookAuthor}', '${bookTitle}', '${bookIsbn}');`
+        }).catch(err=>console.log(err))
+        res.send(`new book was added with title "${bookTitle}"`)
+    }catch(err){
+        res.send(err)
+    }
+})
+
+app.listen(port, () => {
+    console.log(`Example app listening on port ${port}`)
+})
 
 // INSERT SCRIPT
 // const result = await client.query({
@@ -38,4 +56,4 @@ const result = await client.query({
 //         VALUES ('დავით გურამიშვილი', 'დავითიანი', '9785529007952');`
 // }).catch(err=>console.log(err))
 
-console.log(result.rows)
+// console.log(result.rows)
