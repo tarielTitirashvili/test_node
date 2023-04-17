@@ -62,6 +62,23 @@ app.delete('/books', async (req, res, next) =>{
     }
 })
 
+app.put('/books', async (req, res, next) =>{
+    try{
+        const {isbn: bookIsbn, title: bookTitle, author: bookAuthor} = req.body
+        const client = await pool.connect().catch(err => console.log(err))
+        client.query({
+            text: `UPDATE public.books
+            SET author=$1, title=$2, isbn=$3
+            WHERE isbn=$3;`,
+            values: [bookAuthor, bookTitle, bookIsbn]
+        })
+        res.send(bookTitle+' WAS SUCCESSFULLY updated to.' + bookTitle, bookAuthor, bookIsbn)
+    }catch(err){
+        console.log(err)
+        res.send("some error", err)
+    }
+})
+
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
